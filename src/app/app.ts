@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { RxjsService } from './core/service/rxjs-service';
 
 @Component({
   selector: 'app-root',
@@ -9,4 +10,9 @@ import { RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly title = signal('RxJs');
+  private service = inject(RxjsService);
+
+  click() {
+    this.service.log()
+  }
 }
