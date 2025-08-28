@@ -1,0 +1,20 @@
+<div>
+  <h1>Поиск</h1>
+  <input 
+    type="text" 
+    [ngModel]="value()" 
+    (ngModelChange)="onInputChange($event)" 
+  />
+</div>
+
+@if(service.loading()) {
+<p>Загрузка...</p>
+}
+
+@if (service.error()) {
+<p style="color: red;">Ошибка: {{ service.error() }}</p>
+}
+
+@for (user of service.users(); track user.id) {
+<p>{{ user.firstName }} {{ user.lastName }}</p>
+}
