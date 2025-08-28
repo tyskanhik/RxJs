@@ -1,0 +1,15 @@
+<div class="container">
+  <button (click)="loadData()" [disabled]="service.loading()">
+    {{ service.loading() ? 'Loading...' : 'Load Data' }}
+  </button>
+
+  @if (service.loading()) {
+    <div>Loading...</div>
+  }
+
+  @if (service.error()) {
+    <div>
+      Error: {{ service.error() }}
+    </div>
+  }
+</div>
