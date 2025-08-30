@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { catchError, forkJoin, map, mergeMap, of, switchMap, tap } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Cart, Todo, User, UserData } from './models';
 
 interface State {
@@ -33,25 +33,8 @@ export class RxJsSevice {
       error: null
     }))
 
-    return this.http.get<{ users: User[] }>(`${this.apiUrl}/users?limit=5&skip=10`).pipe(
-      map(res => res.users),
-      switchMap(users => {
-        return forkJoin(
-          users.map(user => {
-            return forkJoin({
-              cart: this.http.get<Cart>(`${this.apiUrl}/carts/user/${user.id}`),
-              todos: this.http.get<{ todos: Todo[] }>(`${this.apiUrl}/todos/user/${user.id}`)
-                .pipe(map(res => res.todos))
-            }).pipe(
-              map(({ cart, todos }) => ({
-                userId: user.id,
-                cart,
-                todo: todos
-              }))
-            );
-          })
-        )
-      }),
+    return this.loadUsers().pipe(
+      switchMap(users => forkJoin(users.map(user => this.loadUserDetails(user)))),
       tap(data => {
         this.state.update(state => ({
           ...state,
@@ -60,15 +43,49 @@ export class RxJsSevice {
           error: null
         }))
       }),
-      catchError((err: HttpErrorResponse) => {
-        const errorMessage = err.error?.message || 'Ошибка поиска';
-        this.state.update(state => ({
-          ...state,
-          loading: false,
-          error: errorMessage
-        }))
-        return of([])
-      })
+      catchError(err => this.handleError(err))
     )
+  }
+
+  private loadUsers(): Observable<User[]> {
+    return this.http.get<{ users: User[] }>(`${this.apiUrl}/users?limit=5&skip=10`).pipe(
+      map(res => res.users)
+    );
+  }
+
+  private loadUserDetails(user: User): Observable<UserData> {
+    return forkJoin({
+      cart: this.loadUserCart(user.id),
+      todos: this.loadUserTodos(user.id)
+    }).pipe(
+      map(({ cart, todos }) => ({
+        userId: user.id,
+        cart,
+        todo: todos
+      }))
+    );
+  }
+
+  private loadUserCart(userId: number): Observable<Cart> {
+    return this.http.get<Cart>(`${this.apiUrl}/carts/user/${userId}`);
+  }
+
+  private loadUserTodos(userId: number): Observable<Todo[]> {
+    return this.http.get<{ todos: Todo[] }>(`${this.apiUrl}/todos/user/${userId}`).pipe(
+      map(res => res.todos)
+    );
+  }
+
+  private handleError(err: HttpErrorResponse) {
+    const errorMessage = err.error?.message || 'Ошибка загрузки данных';
+
+    this.state.update(state => ({
+      ...state,
+      loading: false,
+      error: errorMessage,
+      data: []
+    }));
+
+    return of([]);
   }
 }
