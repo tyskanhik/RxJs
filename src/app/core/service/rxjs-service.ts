@@ -10,11 +10,7 @@ export class RxjsService {
     skipWhileInclusive(v => v < 2),
   );
 
-  log() {
-    this.data$.subscribe({
-      next: v => console.log(v),
-      error: err => console.log(err),
-      complete: () => console.log('завершено')
-    })
+  getData(): Observable<number> {
+    return this.data$
   }
 }
