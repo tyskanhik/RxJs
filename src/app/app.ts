@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, Subject, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject, switchMap, takeUntil } from 'rxjs';
 import { RxjsService } from './core/service/rxjs-service';
 
 @Component({
@@ -9,23 +9,30 @@ import { RxjsService } from './core/service/rxjs-service';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   protected readonly title = signal('RxJs');
   protected service = inject(RxjsService);
   value = signal<string>('');
 
   private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   ngOnInit() {
     this.searchSubject.pipe(
       debounceTime(500),
       distinctUntilChanged(),
-      switchMap(query => this.service.searchUsers(query))
+      switchMap(query => this.service.searchUsers(query)),
+      takeUntil(this.destroy$)
     ).subscribe()
   }
 
   onInputChange(newValue: string) {
     this.value.set(newValue);
     this.searchSubject.next(newValue);
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
