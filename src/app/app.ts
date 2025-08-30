@@ -1,6 +1,6 @@
-import { afterNextRender, Component, ElementRef, signal, viewChild } from '@angular/core';
+import { afterNextRender, Component, ElementRef, OnDestroy, signal, viewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { buffer, debounceTime, filter, fromEvent } from 'rxjs';
+import { buffer, debounceTime, filter, fromEvent, Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -8,12 +8,13 @@ import { buffer, debounceTime, filter, fromEvent } from 'rxjs';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App {
+export class App implements OnDestroy {
   protected readonly title = signal('RxJs');
 
   clickDiv = viewChild<ElementRef<HTMLDivElement>>('clickDiv');
 
   lastAction = signal<string>('None');
+  private destroy$ = new Subject<void>();
 
   constructor() {
     afterNextRender(() => {
@@ -26,7 +27,8 @@ export class App {
 
     const bufferedClicks$ = click$.pipe(
       buffer(click$.pipe(debounceTime(300))),
-      filter(clicks => clicks.length < 3)
+      filter(clicks => clicks.length < 3),
+      takeUntil(this.destroy$)
     );
 
     bufferedClicks$.subscribe(clicks => {
@@ -46,5 +48,10 @@ export class App {
   private handleDoubleClick() {
     this.lastAction.set('Double Click');
     console.log('Double click action executed');
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
