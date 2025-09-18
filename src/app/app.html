@@ -1,0 +1,88 @@
+<div class="tester-container">
+  <h1>CRM API Tester</h1>
+
+  <!-- Filter Section -->
+  <div class="section">
+    <h2>Filter Tickets</h2>
+    <select [(ngModel)]="statusFilter" (change)="loadTickets()">
+      <option value="">All</option>
+      <option value="new">New</option>
+      <option value="in_progress">In Progress</option>
+      <option value="closed">Closed</option>
+    </select>
+  </div>
+
+  <!-- Create Ticket Section -->
+  <div class="section">
+    <h2>Create New Ticket</h2>
+    <div>
+      <input [(ngModel)]="newTicket.title" placeholder="Title" />
+      <textarea [(ngModel)]="newTicket.description" placeholder="Description"></textarea>
+      <select [(ngModel)]="newTicket.priority">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+      <button (click)="createTicket()">Create Ticket</button>
+    </div>
+  </div>
+
+  <!-- Tickets List -->
+  <div class="section">
+    <h2>Tickets ({{tickets.length}})</h2>
+    <div class="ticket-list">
+      @for (ticket of tickets; track $index) {
+        <div class="ticket-item" 
+             [class.selected]="currentTicket?.id === ticket.id"
+             (click)="selectTicket(ticket)">
+          <h3>{{ticket.title}}</h3>
+          <p>{{ticket.description}}</p>
+          <span class="badge {{ticket.status}}">{{ticket.status}}</span>
+          <span class="badge {{ticket.priority}}">{{ticket.priority}}</span>
+          <button (click)="deleteTicket(ticket.id!); $event.stopPropagation()">Delete</button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Selected Ticket Details -->
+  @if (currentTicket) {
+    <div class="section">
+      <h2>Selected Ticket</h2>
+      <div>
+        <input [(ngModel)]="updateData.title" placeholder="Title" />
+        <textarea [(ngModel)]="updateData.description" placeholder="Description"></textarea>
+        <select [(ngModel)]="updateData.priority">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <select [(ngModel)]="updateData.status">
+          <option value="new">New</option>
+          <option value="in_progress">In Progress</option>
+          <option value="closed">Closed</option>
+        </select>
+        <button (click)="updateTicket()">Update Ticket</button>
+      </div>
+  
+      <!-- File Upload -->
+      <div class="section">
+        <h3>Upload File</h3>
+        <input type="file" (change)="onFileSelected($event)" />
+        <button (click)="uploadFile()" [disabled]="!selectedFile">Upload</button>
+      </div>
+  
+      <!-- Attachments List -->
+      <div class="section">
+        <h3>Attachments ({{attachments.length}})</h3>
+        @for (attachment of attachments; track $index) {
+          <div class="attachment-item">
+            <span>{{attachment.originalName}} ({{attachment.size}} bytes)</span>
+            <button (click)="downloadFile(attachment)">Download</button>
+            <button (click)="deleteFile(attachment.id!)">Delete</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
